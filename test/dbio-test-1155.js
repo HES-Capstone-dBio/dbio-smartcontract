@@ -62,28 +62,4 @@ describe("DBioContract1155", function() {
       .to.be.revertedWith('Signature invalid or unauthorized')
   });
 
-  it("Should redeem if payment is >= minPrice", async function() {
-    const { contract, redeemer, minter } = await deploy()
-
-    const dbioMinter = new DBioMinter({ contract, signer: minter })
-    const minPrice = ethers.constants.WeiPerEther // charge 1 Eth
-    const voucher = await dbioMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi", minPrice)
-
-    await expect(contract.redeem(redeemer.address, voucher, { value: minPrice }))
-      .and.to.emit(contract, 'TransferSingle') // transfer to redeemer
-      .withArgs(minter.address, minter.address, redeemer.address, voucher.tokenId, 1)
-  })
-
-  it("Should fail to redeem if payment is < minPrice", async function() {
-    const { contract, redeemer, minter } = await deploy()
-
-    const dbioMinter = new DBioMinter({ contract, signer: minter })
-    const minPrice = ethers.constants.WeiPerEther // charge 1 Eth
-    const voucher = await dbioMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi", minPrice)
-
-    const payment = minPrice.sub(10000)
-    await expect(contract.redeem(redeemer.address, voucher, { value: payment }))
-      .to.be.revertedWith('Insufficient funds to redeem')
-  })
-
 });

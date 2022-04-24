@@ -15,11 +15,7 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
     string private constant SIGNING_DOMAIN = "DBio";
     string private constant SIGNATURE_VERSION = "1";
 
-    mapping(address => uint256) pendingWithdrawals;
-
     mapping(uint256 => string) private _tokenURIs;
-
-    uint256 public total_Vouchers;
 
     uint256 public total_NFTs;
 
@@ -38,8 +34,6 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
         string uri;
         /// @notice the EIP-712 signature of all other fields in the NFTVoucher struct. For a voucher to be valid, it must be signed by an account with the MINTER_ROLE.
         bytes signature;
-        /// @notice The price (in wei) that dBio sets per each resource.
-        uint256 price;
     }
 
     /// @notice Redeems an NFTVoucher for an actual NFT, creating it in the process.
@@ -59,18 +53,12 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
             "Signature invalid or unauthorized"
         );
 
-        // make sure that the redeemer is paying enough to cover the cost of the resources
-        require(msg.value >= voucher.price, "Insufficient funds to redeem");
-
         // first assign the token to the signer, to establish provenance on-chain
         _mint(signer, voucher.tokenId, 1, "");
         _setTokenUri(voucher.tokenId, voucher.uri);
 
         // transfer the token to the redeemer
         safeTransferFrom(signer, redeemer, voucher.tokenId, 1, "");
-
-        // record payment to signer's withdrawal balance
-        pendingWithdrawals[signer] += msg.value;
 
         total_NFTs += 1;
 
@@ -107,9 +95,6 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
             //create the input array of amounts per NFT that corresponds to the total NFTs; only one NFT should be created per voucher, hence this value is hard-coded
             amounts[i] = 1;
 
-            //add up the total cost to ensure that the transfer includes the correct amount of money for the transaction of the NFTs
-            total_cost += voucher.price;
-
             //set the token URI for the voucher
             _setTokenUri(voucher.tokenId, voucher.uri);
         }
@@ -129,33 +114,9 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
         // transfer the token to the redeemer
         safeBatchTransferFrom(signer, redeemer, tokenIds, amounts, "");
 
-        // record payment to signer's withdrawal balance
-        pendingWithdrawals[signer] += msg.value;
-
         total_NFTs += voucherList.length;
 
         return tokenIds;
-    }
-
-    /// @notice Transfers all pending withdrawal balance to the caller. Reverts if the caller is not an authorized minter.
-    function withdraw() public {
-        require(
-            hasRole(MINTER_ROLE, msg.sender),
-            "Only authorized minters can withdraw"
-        );
-
-        address payable receiver = payable(msg.sender);
-
-        uint256 amount = pendingWithdrawals[receiver];
-
-        // zero account before transfer to prevent re-entrancy attack
-        pendingWithdrawals[receiver] = 0;
-        receiver.transfer(amount);
-    }
-
-    /// @notice Retuns the amount of Ether available to the caller to withdraw.
-    function availableToWithdraw() public view returns (uint256) {
-        return pendingWithdrawals[msg.sender];
     }
 
     /// @notice Returns a hash of the given NFTVoucher, prepared using EIP712 typed data hashing rules.
@@ -170,10 +131,9 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
                 keccak256(
                     abi.encode(
                         keccak256(
-                            "NFTVoucher(uint256 tokenId,uint256 price,string uri)"
+                            "NFTVoucher(uint256 tokenId,string uri)"
                         ),
                         voucher.tokenId,
-                        voucher.price,
                         keccak256(bytes(voucher.uri))
                     )
                 )
