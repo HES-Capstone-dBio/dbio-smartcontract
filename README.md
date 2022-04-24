@@ -1,6 +1,6 @@
 # dBio Smart Contract
 
-The DBioContract implements [ERCS 1155](https://ethereum.org/en/developers/docs/standards/tokens/erc-1155/), which allows for batch minting and batch transfers as well as "burning" the NFT to destroy it. The contract creates a "voucher" instead of the NFT first, which allows dBio to postpone any minting costs until after the patient claims the NFT. The minting cost is then bundled with the transfer cost that the patient covers. The idea for lazy minting came from the [Lazy Minting tutorial](https://nftschool.dev/tutorial/lazy-minting/).
+The DBioContract implements [ERC 1155](https://ethereum.org/en/developers/docs/standards/tokens/erc-1155/), which allows for batch minting and batch transfers as well as "burning" the NFT to destroy it. The contract creates a "voucher" instead of the NFT first, which allows dBio to postpone any minting costs until after the patient claims the NFT. The minting cost is then bundled with the transfer cost that the patient covers. The idea for lazy minting came from the [Lazy Minting tutorial](https://nftschool.dev/tutorial/lazy-minting/).
 
 The `lib` directory includes the script from the Lazy Minting Tutorial mentioned above, slightly adjusted for this project. 
 
