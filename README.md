@@ -17,7 +17,7 @@ The Smart Contract also uses [EIP 712](https://eips.ethereum.org/EIPS/eip-712#de
 Since ERC 1155 requires the tokenURI to be set at the intitiation of the contract, the `_setTokenUri` helper function was added as an override so that the URI of the token can be overwritten with each voucher/minting. 
 
 ### Access on Rinkeby Testnet 
-The contract has been deployed to the Rinkeby testnet using the `deploy.js` script in the `scripts` directory. The contract can be seen [here](https://rinkeby.etherscan.io/address/0x1d3a4476ff9502f73d5b691f7b51dd6b79d8af18#code)
+The contract has been deployed to the Rinkeby testnet using the `deploy.js` script in the `scripts` directory. The contract can be seen [here](https://rinkeby.etherscan.io/address/0x01e6142b67475c9b1092b66ffb76cdc30d6267ce#code).
 
 Currently, the private key that was used for deployment to the testnet does not belong to dBio. This will need to change in the future. 
 
