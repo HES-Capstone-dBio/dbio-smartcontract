@@ -28,8 +28,6 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
 
     /// @notice Represents an un-minted NFT, which has not yet been recorded into the blockchain. A signed voucher can be redeemed for a real NFT using the redeem function.
     struct NFTVoucher {
-        /// @notice The id of the token to be redeemed. Must be unique - if another token with this ID already exists, the redeem function will revert.
-        uint256 tokenId;
         /// @notice The metadata URI to associate with this token.
         string uri;
         /// @notice the EIP-712 signature of all other fields in the NFTVoucher struct. For a voucher to be valid, it must be signed by an account with the MINTER_ROLE.
@@ -53,16 +51,19 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
             "Signature invalid or unauthorized"
         );
 
+        uint256 tokenId = total_NFTs + 1; 
+
         // first assign the token to the signer, to establish provenance on-chain
-        _mint(signer, voucher.tokenId, 1, "");
-        _setTokenUri(voucher.tokenId, voucher.uri);
+        _mint(signer, tokenId, 1, "");
+
+        _setTokenUri(tokenId, voucher.uri);
 
         // transfer the token to the redeemer
-        safeTransferFrom(signer, redeemer, voucher.tokenId, 1, "");
+        safeTransferFrom(signer, redeemer, tokenId, 1, "");
 
         total_NFTs += 1;
 
-        return voucher.tokenId;
+        return tokenId;
     }
 
     /// @notice Redeems multiple NFT Vouchers for the actual NFTs and creates them in the process.
@@ -78,6 +79,7 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
         uint256[] memory tokenIds = new uint256[](voucherList.length);
         uint256[] memory amounts = new uint256[](voucherList.length);
         uint256 total_cost;
+        uint256 current_tokenId = total_NFTs; 
 
         // loop through all the NFT vouchers in the list
         for (uint256 i = 0; i < voucherList.length; i++) {
@@ -88,15 +90,18 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
             if (signer != check_signer) {
                 revert("Multiple different NFT signers");
             }
+            
+            // increment tokenId to create it
+            current_tokenId += 1;
 
             //add token id to the array of tokenIds
-            tokenIds[i] = voucher.tokenId;
+            tokenIds[i] = current_tokenId;
 
             //create the input array of amounts per NFT that corresponds to the total NFTs; only one NFT should be created per voucher, hence this value is hard-coded
             amounts[i] = 1;
 
             //set the token URI for the voucher
-            _setTokenUri(voucher.tokenId, voucher.uri);
+            _setTokenUri(current_tokenId, voucher.uri);
         }
 
         // make sure that the signer is authorized to mint NFTs
@@ -131,9 +136,8 @@ contract DBioContract1155 is ERC1155, EIP712, AccessControl {
                 keccak256(
                     abi.encode(
                         keccak256(
-                            "NFTVoucher(uint256 tokenId,string uri)"
+                            "NFTVoucher(string uri)"
                         ),
-                        voucher.tokenId,
                         keccak256(bytes(voucher.uri))
                     )
                 )
